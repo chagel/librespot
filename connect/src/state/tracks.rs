@@ -281,6 +281,11 @@ impl<'ct> ConnectState {
         }
     }
 
+    pub fn clear_queue(&mut self) {
+        self.next_tracks_mut().retain(|track| !track.is_queue());
+        self.update_queue_revision()
+    }
+
     pub fn fill_up_next_tracks(&mut self) -> Result<(), Error> {
         let ctx = self.get_context(self.fill_up_context)?;
         let mut new_index = ctx.index.track as usize;

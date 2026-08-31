@@ -120,6 +120,7 @@ enum SpircCommand {
     Pause,
     Prev,
     Next,
+    ClearQueue,
     VolumeUp,
     VolumeDown,
     Shutdown,
@@ -319,6 +320,13 @@ impl Spirc {
     /// Does nothing if we are not the active device.
     pub fn next(&self) -> Result<(), Error> {
         Ok(self.commands.send(SpircCommand::Next)?)
+    }
+
+    /// Removes every queued track, keeping the playing context's own tracks.
+    ///
+    /// Does nothing if we are not the active device.
+    pub fn clear_queue(&self) -> Result<(), Error> {
+        Ok(self.commands.send(SpircCommand::ClearQueue)?)
     }
 
     /// Increases the volume by configured steps of [ConnectConfig].
@@ -671,6 +679,7 @@ impl SpircTask {
             SpircCommand::Pause => self.handle_pause(),
             SpircCommand::Prev => self.handle_prev()?,
             SpircCommand::Next => self.handle_next(None)?,
+            SpircCommand::ClearQueue => self.handle_clear_queue(),
             SpircCommand::VolumeUp => self.handle_volume_up(),
             SpircCommand::VolumeDown => self.handle_volume_down(),
             SpircCommand::Shuffle(shuffle) => self.handle_shuffle(shuffle)?,
@@ -1635,6 +1644,13 @@ impl SpircTask {
             info!("Not playing next track because there are no more tracks left in queue.");
             self.handle_stop();
             Ok(())
+        }
+    }
+
+    fn handle_clear_queue(&mut self) {
+        self.connect_state.clear_queue();
+        if let Err(why) = self.connect_state.fill_up_next_tracks() {
+            warn!("failed filling up next_track after clearing the queue: {why}")
         }
     }
 
