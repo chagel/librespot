@@ -121,6 +121,7 @@ enum SpircCommand {
     Prev,
     Next,
     ClearQueue,
+    AddToQueue(String),
     VolumeUp,
     VolumeDown,
     Shutdown,
@@ -327,6 +328,17 @@ impl Spirc {
     /// Does nothing if we are not the active device.
     pub fn clear_queue(&self) -> Result<(), Error> {
         Ok(self.commands.send(SpircCommand::ClearQueue)?)
+    }
+
+    /// Adds a track or episode to the queue, after the tracks already
+    /// queued there and before the playing context's own.
+    ///
+    /// Does nothing if we are not the active device.
+    pub fn add_to_queue(&self, uri: String) -> Result<(), Error> {
+        if !uri.starts_with("spotify:track:") && !uri.starts_with("spotify:episode:") {
+            return Err(Error::invalid_argument("uri"));
+        }
+        Ok(self.commands.send(SpircCommand::AddToQueue(uri))?)
     }
 
     /// Increases the volume by configured steps of [ConnectConfig].
@@ -680,6 +692,7 @@ impl SpircTask {
             SpircCommand::Prev => self.handle_prev()?,
             SpircCommand::Next => self.handle_next(None)?,
             SpircCommand::ClearQueue => self.handle_clear_queue(),
+            SpircCommand::AddToQueue(uri) => self.handle_add_to_queue(uri),
             SpircCommand::VolumeUp => self.handle_volume_up(),
             SpircCommand::VolumeDown => self.handle_volume_down(),
             SpircCommand::Shuffle(shuffle) => self.handle_shuffle(shuffle)?,
@@ -1652,6 +1665,14 @@ impl SpircTask {
         if let Err(why) = self.connect_state.fill_up_next_tracks() {
             warn!("failed filling up next_track after clearing the queue: {why}")
         }
+    }
+
+    fn handle_add_to_queue(&mut self, uri: String) {
+        let track = librespot_protocol::player::ProvidedTrack {
+            uri,
+            ..Default::default()
+        };
+        self.connect_state.add_to_queue(track, true);
     }
 
     fn handle_prev(&mut self) -> Result<(), Error> {
