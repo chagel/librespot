@@ -213,6 +213,20 @@ impl EventHandler {
                                     env_vars.insert("TRACK_ID", id);
                                 }
                             },
+                            PlayerEvent::AudioKeyUnavailable { track_id, .. } => {
+                                match track_id.to_id() {
+                                    Err(e) => warn!(
+                                        "PlayerEvent::AudioKeyUnavailable: Invalid track id: {e}"
+                                    ),
+                                    Ok(id) => {
+                                        env_vars.insert(
+                                            "PLAYER_EVENT",
+                                            "audio_key_unavailable".to_string(),
+                                        );
+                                        env_vars.insert("TRACK_ID", id);
+                                    }
+                                }
+                            }
                             PlayerEvent::VolumeChanged { volume } => {
                                 env_vars.insert("PLAYER_EVENT", "volume_changed".to_string());
                                 env_vars.insert("VOLUME", volume.to_string());
