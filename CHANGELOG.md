@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- [core] Add method `get_playlist_range` to `SpClient` for a window of a playlist's items with its header decorated on
+- [metadata] Add `Playlist::get_range` to fetch a window of a playlist's items without downloading the whole list
+
 ### Fixed
 
 - [playback] Stop instead of advancing through the queue when Spotify refuses an audio key
